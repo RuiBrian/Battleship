@@ -4,15 +4,15 @@ open Core
 type ship_type = Carrier | Battleship | Destroyer | Submarine | Patrol
 [@@deriving compare]
 
-type ship = { ship_type : ship_type; length : int }
+type ship = { ship_type : ship_type; length : int } [@@deriving compare]
 (** A ship consists of a [ship_type] and its length.  *)
 
 type board_cell = int * char
 (** An [(int, char)] pair that corresponds to a position/cell on the board. *)
 
-(** A cell can be empty or occupied by a [ship]. A boolean value indicates
-whether or not the position has been struck. *)
-type cell_state = Empty | Filled of (ship_type * bool) [@@deriving compare]
+(** Describes the current state of a given cell. *)
+type cell_state = Empty | Miss | Occupied of ship | Hit of ship | Sunk of ship
+[@@deriving compare]
 
 (** A ship can be oriented either horizontally or vertically. *)
 type ship_orientation = Horizontal | Vertical
