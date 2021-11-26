@@ -4,36 +4,33 @@ open Core
 type ship_type = Carrier | Battleship | Destroyer | Submarine | Patrol
 [@@deriving compare]
 
-type ship = { ship_type : ship_type; length : int } [@@deriving compare]
-(** A ship consists of a [ship_type] and its length.  *)
-
-type board_cell = int * char
+type board_cell = int * char [@@deriving equal, compare]
 (** An [(int, char)] pair that corresponds to a position/cell on the board. *)
+
+(** Summarizes the result of an attempted attack by a player. *)
+type attack_result = Miss | Hit | Repeat | Invalid [@@deriving compare]
+
+(** A ship can be oriented either horizontally or vertically. *)
+type ship_orientation = Horizontal | Vertical [@@deriving compare]
+
+type ship = {
+  ship_type : ship_type;
+  length : int;
+  position : board_cell;
+  orientation : ship_orientation;
+}
+[@@deriving compare]
+(** A ship consists of a [ship_type], its length, its position, and its orientation. *)
 
 (** Describes the current state of a given cell. *)
 type cell_state = Empty | Miss | Occupied of ship | Hit of ship | Sunk of ship
 [@@deriving compare]
 
-(** A ship can be oriented either horizontally or vertically. *)
-type ship_orientation = Horizontal | Vertical
+type grid = (board_cell, cell_state) List.Assoc.t
+(** A grid is represented by an association list*)
 
-type board = (board_cell, cell_state) List.Assoc.t
-(** A game board is represented by an association list. *)
-
-val carrier : ship
-(** Create a carrier ship. *)
-
-val battleship : ship
-(** Create a battleship. *)
-
-val destroyer : ship
-(** Create a destroyer. *)
-
-val submarine : ship
-(** Create a submarine. *)
-
-val patrol : ship
-(** Create a patrol boat. *)
+type board = grid * ship list
+(** A game board is represented by a grid and a list of sunk ships. *)
 
 val create_board : board
 (** [create_board] creates and returns a 10 x 10 board. *)
@@ -41,11 +38,12 @@ val create_board : board
 val is_game_over : board -> bool
 (** [is_game_over b] checks if all ships on [b] have been destroyed. *)
 
-val attack_cell : board -> board_cell -> board option
+val attack_cell : board -> board_cell -> board option * attack_result
 (** [attack_cell b c] attempts to attack [c] on [b]. Returns [Some(board)] on
 success and [None] on failure. *)
 
-val place_ship : ship -> board -> board_cell * ship_orientation -> board option
+val place_ship :
+  ship_type -> int -> board -> board_cell * ship_orientation -> board option
 (** [place_ship s b (c, o)] attempts to place [s] on [b] at [c] oriented
 according to [o]. Returns [Some(board)] on success and [None] on failure. *)
 
