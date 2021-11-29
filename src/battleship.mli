@@ -7,9 +7,6 @@ type ship_type = Carrier | Battleship | Destroyer | Submarine | Patrol
 type board_cell = int * char [@@deriving equal, compare]
 (** An [(int, char)] pair that corresponds to a position/cell on the board. *)
 
-(** Summarizes the result of an attempted attack by a player. *)
-type attack_result = Miss | Hit | Repeat | Invalid [@@deriving compare]
-
 (** A ship can be oriented either horizontally or vertically. *)
 type ship_orientation = Horizontal | Vertical [@@deriving compare]
 
@@ -25,6 +22,9 @@ type ship = {
 (** Describes the current state of a given cell. *)
 type cell_state = Empty | Miss | Occupied of ship | Hit of ship | Sunk of ship
 [@@deriving compare]
+
+(** Summarizes the result of an attempted attack by a player. *)
+type attack_result = Missed | Success | Repeat | Invalid [@@deriving equal]
 
 type grid = (board_cell, cell_state) List.Assoc.t
 (** A grid is represented by an association list*)

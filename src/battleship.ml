@@ -5,8 +5,6 @@ type ship_type = Carrier | Battleship | Destroyer | Submarine | Patrol
 
 type board_cell = int * char [@@deriving equal, compare]
 
-type attack_result = Miss | Hit | Repeat | Invalid [@@deriving compare]
-
 type ship_orientation = Horizontal | Vertical [@@deriving compare]
 
 type ship = {
@@ -20,11 +18,13 @@ type ship = {
 type cell_state = Empty | Miss | Occupied of ship | Hit of ship | Sunk of ship
 [@@deriving compare]
 
+type attack_result = Missed | Success | Repeat | Invalid [@@deriving equal]
+
 type grid = (board_cell, cell_state) List.Assoc.t
 
 type board = grid * ship list
 
-let rows = [ 1; 2; 3; 4; 5; 6; 7; 8; 9; 10 ]
+let rows = [ 0; 1; 2; 3; 4; 5; 6; 7; 8; 9 ]
 
 let columns = [ 'A'; 'B'; 'C'; 'D'; 'E'; 'F'; 'G'; 'H'; 'I'; 'J' ]
 
@@ -42,16 +42,16 @@ let is_game_over (b : board) : bool =
 let attack_cell (b : board) (cell : board_cell) : board option * attack_result =
   let grid, sunk_ships = b in
   match List.Assoc.find grid ~equal:equal_board_cell cell with
-  | Some Empty -> (None, Miss)
+  | Some Empty -> (None, Missed)
   | Some Miss -> (None, Repeat)
   | Some (Occupied ship) ->
       let temp = List.Assoc.remove grid ~equal:equal_board_cell cell in
       let new_grid =
-        List.Assoc.add temp ~equal:equal_board_cell cell (Occupied ship)
+        List.Assoc.add temp ~equal:equal_board_cell cell (Hit ship)
       in
       (* TODO: Check if a ship was sunk and add to sunk_ships list *)
       let new_board = (new_grid, sunk_ships) in
-      (Some new_board, Hit)
+      (Some new_board, Success)
   | Some (Hit _) -> (None, Repeat)
   | Some (Sunk _) -> (None, Repeat)
   | None -> (None, Invalid)
@@ -62,11 +62,11 @@ let place_ship (s : ship_type) (l : int) (b : board)
       (orientation : ship_orientation) : bool =
     match orientation with
     | Vertical ->
-        Int.between x ~low:1 ~high:10
-        && Int.between (x + length) ~low:1 ~high:10
+        Int.between x ~low:0 ~high:9
+        && Int.between (x + length) ~low:0 ~high:9
         && Char.between y ~low:'A' ~high:'J'
     | Horizontal ->
-        Int.between x ~low:1 ~high:10
+        Int.between x ~low:0 ~high:9
         && Char.between y ~low:'A' ~high:'J'
         && Char.between
              (Char.of_int_exn (Char.to_int y + length))
@@ -97,7 +97,7 @@ let place_ship (s : ship_type) (l : int) (b : board)
 
   let place_ship_at_cells (cells : board_cell list) (g : grid)
       (orientation : ship_orientation) : grid =
-    List.fold cells ~init:g ~f:(fun acc cur ->
+    List.fold (List.rev cells) ~init:g ~f:(fun acc cur ->
         let temp = List.Assoc.remove acc ~equal:equal_board_cell cur in
         List.Assoc.add temp ~equal:equal_board_cell cur
           (Occupied
@@ -139,4 +139,14 @@ let board_to_string (b : board) : string =
 
   grid |> List.fold ~init:"" ~f:aux
 
-let print_board (b : board) : unit = b |> board_to_string |> print_endline
+let print_board (b : board) : unit =
+  let sort_board b =
+    let grid, sunk_ships = b in
+    let lex_cmp ((x, y), _) ((x', y'), _) =
+      let compare_row = compare x x' in
+      if compare_row <> 0 then compare_row else Char.compare y y'
+    in
+    (List.sort ~compare:lex_cmp grid, sunk_ships)
+  in
+  
+  b |> sort_board |> board_to_string |> print_endline
