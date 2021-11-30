@@ -39,6 +39,16 @@ let create_board : board =
 let is_game_over (b : board) : bool =
   match b with _, sunk_ships -> List.length sunk_ships = 5
 
+let get_ship_cells (start_cell : board_cell) (l : int)
+    (orientation : ship_orientation) : board_cell list =
+  let x, y = start_cell in
+  match orientation with
+  | Vertical -> List.map (List.range x (x + l)) ~f:(fun cur -> (cur, y))
+  | Horizontal ->
+      List.map
+        (List.range (Char.to_int y) (Char.to_int y + l))
+        ~f:(fun cur -> (x, Char.of_int_exn cur))
+
 let attack_cell (b : board) (cell : board_cell) : board option * attack_result =
   let grid, sunk_ships = b in
   match List.Assoc.find grid ~equal:equal_board_cell cell with
@@ -84,17 +94,6 @@ let place_ship (s : ship_type) (l : int) (b : board)
     List.fold cells ~init:false ~f:aux
   in
 
-  let get_ship_cells (start_cell : board_cell) (orientation : ship_orientation)
-      : board_cell list =
-    let x, y = start_cell in
-    match orientation with
-    | Vertical -> List.map (List.range x (x + l)) ~f:(fun cur -> (cur, y))
-    | Horizontal ->
-        List.map
-          (List.range (Char.to_int y) (Char.to_int y + l))
-          ~f:(fun cur -> (x, Char.of_int_exn cur))
-  in
-
   let place_ship_at_cells (cells : board_cell list) (g : grid)
       (orientation : ship_orientation) : grid =
     List.fold (List.rev cells) ~init:g ~f:(fun acc cur ->
@@ -113,7 +112,7 @@ let place_ship (s : ship_type) (l : int) (b : board)
   match placement with
   | (x, y), orientation ->
       if valid_position x y l orientation then
-        let ship_cells = get_ship_cells (x, y) orientation in
+        let ship_cells = get_ship_cells (x, y) l orientation in
         match cells_are_occupied ship_cells grid with
         | false ->
             Some (place_ship_at_cells ship_cells grid orientation, sunk_ships)

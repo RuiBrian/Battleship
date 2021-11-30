@@ -40,6 +40,10 @@ val attack_cell : board -> board_cell -> board option * attack_result
 (** [attack_cell b c] attempts to attack [c] on [b]. Returns [Some(board)] on
 success and [None] on failure. *)
 
+val get_ship_cells : board_cell -> int -> ship_orientation -> board_cell list
+(** [get_ship_cells c l o] gets the cells of a ship at [c] with length [l]
+oriented according to [o]. *)
+
 val place_ship :
   ship_type -> int -> board -> board_cell * ship_orientation -> board option
 (** [place_ship s b (c, o)] attempts to place [s] on [b] at [c] oriented
