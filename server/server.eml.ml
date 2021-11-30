@@ -122,10 +122,57 @@ let place_ship_handler request =
       | None -> Dream.respond ~status:`Bad_Request "Ship already placed")
   | _ -> failwith "Invalid player"
 
-(*
-let attack_cell_handler board cell =
-   match attack_cell board cell with
-   | *)
+let attack_cell_handler request =
+  let player = int_of_string @@ Dream.param "player" request in
+  let%lwt body = Dream.body request in
+
+  let attack_cell_request_obj =
+    body |> Yojson.Safe.from_string |> attack_cell_request_obj_of_yojson
+  in
+
+  let attack_cell_request_json =
+    match attack_cell_request_obj with
+    | Ok res -> res
+    | Error msg -> failwith msg
+  in
+
+  let target_cell =
+    match String.split ~on:' ' attack_cell_request_json.cell with
+    | [ row; col ] -> (int_of_string row, Char.of_string col)
+    | _ -> failwith "Invalid cell"
+  in
+
+  let current_turn = if game_state.player_one_turn then 1 else 2 in
+
+  if player <> current_turn then
+    Dream.respond ~status:`Bad_Request "Not your turn!"
+  else
+    match player with
+    | 1 -> (
+        match attack_cell game_state.player_one_board target_cell with
+        | new_board, Missed ->
+            game_state.player_one_board <- new_board;
+            game_state.player_one_turn <- not game_state.player_one_turn;
+            Dream.respond @@ board_to_string game_state.player_one_board
+        | new_board, Success ->
+            game_state.player_one_board <- new_board;
+            game_state.player_one_turn <- not game_state.player_one_turn;
+            Dream.respond @@ board_to_string game_state.player_one_board
+        | _, Repeat -> Dream.respond "Cell already attacked; try again"
+        | _, Invalid -> Dream.respond "Invalid cell; try again")
+    | 2 -> (
+        match attack_cell game_state.player_two_board target_cell with
+        | new_board, Missed ->
+            game_state.player_two_board <- new_board;
+            game_state.player_one_turn <- not game_state.player_one_turn;
+            Dream.respond @@ board_to_string game_state.player_two_board
+        | new_board, Success ->
+            game_state.player_two_board <- new_board;
+            game_state.player_one_turn <- not game_state.player_one_turn;
+            Dream.respond @@ board_to_string game_state.player_two_board
+        | _, Repeat -> Dream.respond "Cell already attacked; try again"
+        | _, Invalid -> Dream.respond "Invalid cell; try again")
+    | _ -> failwith "Invalid player"
 
 let connection_handler _ =
   num_connections := !num_connections + 1;
@@ -147,10 +194,10 @@ let () =
          Dream.post "/connect" connection_handler;
          Dream.scope "/battleship" []
            [
-             Dream.get "/player_turn" get_turn_handler;
+             Dream.get "/player-turn" get_turn_handler;
              Dream.get "/create-board" create_board_handler;
              Dream.post "/place-ship/:player" place_ship_handler;
-             (* Dream.post "/attack-cell/:player" attack_cell_handler; *)
+             Dream.post "/attack-cell/:player" attack_cell_handler;
            ];
        ]
   @@ Dream.not_found
