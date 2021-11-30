@@ -1,9 +1,11 @@
 (executable
  (name server)
- (libraries dream battleship)
- (preprocess (pps lwt_ppx)))
+ (libraries dream battleship yojson)
+ (preprocess
+  (pps lwt_ppx ppx_deriving_yojson)))
 
 (rule
  (targets server.ml)
  (deps server.eml.ml)
- (action (run dream_eml %{deps} --workspace %{workspace_root})))
+ (action
+  (run dream_eml %{deps} --workspace %{workspace_root})))

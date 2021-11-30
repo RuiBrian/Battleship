@@ -1,15 +1,156 @@
-let hello who =
-  <html>
-  <body>
-    <h1>Hello, <%s who %>!</h1>
-  </body>
-  </html>
+open Core
+open Battleship
+
+let num_connections = ref 0
+
+type place_ship_request_obj = {
+  cell : string;
+  ship_type : string;
+  orientation : string;
+}
+[@@deriving yojson]
+
+type attack_cell_request_obj = { cell : string } [@@deriving yojson]
+
+type state = {
+  mutable player_one_board : board;
+  mutable player_two_board : board;
+  mutable player_one_ships_to_place : ship_type list;
+  mutable player_two_ships_to_place : ship_type list;
+  mutable player_one_turn : bool;
+}
+
+let game_state =
+  {
+    player_one_board = create_board;
+    player_two_board = create_board;
+    player_one_ships_to_place =
+      [ Carrier; Battleship; Destroyer; Submarine; Patrol ];
+    player_two_ships_to_place =
+      [ Carrier; Battleship; Destroyer; Submarine; Patrol ];
+    player_one_turn = true;
+  }
+
+let homepage_handler _ =
+  let header = "<html>\n<body>\n<h1>Battleship.</h1>\n</body>\n</html>" in
+  Dream.html header
+
+let create_board_handler _ = Dream.respond @@ board_to_string create_board
+
+let place_ship_handler request =
+  let player = int_of_string @@ Dream.param "player" request in
+  let%lwt body = Dream.body request in
+
+  let place_ship_request_obj =
+    body |> Yojson.Safe.from_string |> place_ship_request_obj_of_yojson
+  in
+
+  let place_ship_request_json =
+    match place_ship_request_obj with
+    | Ok res -> res
+    | Error msg -> failwith msg
+  in
+
+  let ship_type =
+    match place_ship_request_json.ship_type with
+    | "Carrier" -> Carrier
+    | "Battleship" -> Battleship
+    | "Destroyer" -> Destroyer
+    | "Submarine" -> Submarine
+    | "Patrol" -> Patrol
+    | _ -> failwith "Invalid ship"
+  in
+
+  let board_cell =
+    match String.split ~on:' ' place_ship_request_json.cell with
+    | [ row; col ] -> (int_of_string row, Char.of_string col)
+    | _ -> failwith "Invalid cell"
+  in
+
+  let orientation =
+    match place_ship_request_json.orientation with
+    | "Horizontal" -> Horizontal
+    | "Vertical" -> Vertical
+    | _ -> failwith "Invalid orientation"
+  in
+
+  let length =
+    match ship_type with
+    | Carrier -> 5
+    | Battleship -> 4
+    | Destroyer -> 3
+    | Submarine -> 3
+    | Patrol -> 2
+  in
+
+  match player with
+  | 1 -> (
+      match
+        List.find game_state.player_one_ships_to_place ~f:(fun x ->
+            compare_ship_type x ship_type = 0)
+      with
+      | Some _ -> (
+          match
+            place_ship ship_type length game_state.player_one_board
+              (board_cell, orientation)
+          with
+          | Some new_board ->
+              game_state.player_one_board <- new_board;
+              game_state.player_one_ships_to_place <-
+                List.filter game_state.player_one_ships_to_place ~f:(fun x ->
+                    compare_ship_type x ship_type <> 0);
+              Dream.respond @@ board_to_string game_state.player_one_board
+          | None -> Dream.respond ~status:`Bad_Request "Invalid placement")
+      | None -> Dream.respond ~status:`Bad_Request "Ship already placed")
+  | 2 -> (
+      match
+        List.find game_state.player_two_ships_to_place ~f:(fun x ->
+            compare_ship_type x ship_type = 0)
+      with
+      | Some _ -> (
+          match
+            place_ship ship_type length game_state.player_two_board
+              (board_cell, orientation)
+          with
+          | Some new_board ->
+              game_state.player_two_board <- new_board;
+              game_state.player_two_ships_to_place <-
+                List.filter game_state.player_two_ships_to_place ~f:(fun x ->
+                    compare_ship_type x ship_type <> 0);
+              Dream.respond @@ board_to_string game_state.player_two_board
+          | None -> Dream.respond ~status:`Bad_Request "Invalid placement")
+      | None -> Dream.respond ~status:`Bad_Request "Ship already placed")
+  | _ -> failwith "Invalid player"
+
+(*
+let attack_cell_handler board cell =
+   match attack_cell board cell with
+   | *)
+
+let connection_handler _ =
+  num_connections := !num_connections + 1;
+  if !num_connections > 2 then
+    Dream.respond ~status:`Too_Many_Requests "Too many players!"
+  else
+    Dream.respond
+      ~headers:[ ("Connection", "keep-alive") ]
+      ("Connected! Total connections: " ^ string_of_int !num_connections)
+
+let get_turn_handler _ =
+  if game_state.player_one_turn then Dream.respond "1" else Dream.respond "2"
 
 let () =
-  Dream.run
-  @@ Dream.logger
-  @@ Dream.router [
-    Dream.get "/" (fun _ ->
-      Dream.html (hello "world"));
-  ]
+  Dream.run @@ Dream.logger
+  @@ Dream.router
+       [
+         Dream.get "/" homepage_handler;
+         Dream.post "/connect" connection_handler;
+         Dream.scope "/battleship" []
+           [
+             Dream.get "/player_turn" get_turn_handler;
+             Dream.get "/create-board" create_board_handler;
+             Dream.post "/place-ship/:player" place_ship_handler;
+             (* Dream.post "/attack-cell/:player" attack_cell_handler; *)
+           ];
+       ]
   @@ Dream.not_found
