@@ -1,11 +1,13 @@
 (rule
  (deps
-  src/battleship.ml
+  lib/battleship.ml
+  lib/dune
+  server/server.ml
+  server/dune
+  src/game.ml
   src/dune
   tests/tests.ml
-  tests/dune
-  server/server.ml
-  server/dune)
+  tests/dune)
  (targets battleship.zip)
  (action
   (run zip -R battleship.zip %{deps})))
