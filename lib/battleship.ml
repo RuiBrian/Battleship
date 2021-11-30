@@ -1,11 +1,12 @@
 open Core
 
 type ship_type = Carrier | Battleship | Destroyer | Submarine | Patrol
-[@@deriving compare, yojson]
+[@@deriving equal, compare, yojson]
 
 type board_cell = int * char [@@deriving equal, compare, yojson]
 
-type ship_orientation = Horizontal | Vertical [@@deriving compare, yojson]
+type ship_orientation = Horizontal | Vertical
+[@@deriving equal, compare, yojson]
 
 type ship = {
   ship_type : ship_type;
@@ -13,9 +14,9 @@ type ship = {
   position : board_cell;
   orientation : ship_orientation;
 }
-[@@deriving compare, yojson]
+[@@deriving equal, compare, yojson]
 
-type cell_state = Empty | Miss | Occupied of ship | Hit of ship | Sunk of ship
+type cell_state = Empty | Miss | Occupied of ship | Hit of ship
 [@@deriving compare, yojson]
 
 type attack_result = Missed | Success | Repeat | Invalid [@@deriving equal]
@@ -49,22 +50,37 @@ let get_ship_cells (start_cell : board_cell) (l : int)
         (List.range (Char.to_int y) (Char.to_int y + l))
         ~f:(fun cur -> (x, Char.of_int_exn cur))
 
-let attack_cell (b : board) (cell : board_cell) : board option * attack_result =
+let attack_cell (b : board) (cell : board_cell) : board * attack_result =
   let grid, sunk_ships = b in
   match List.Assoc.find grid ~equal:equal_board_cell cell with
-  | Some Empty -> (None, Missed)
-  | Some Miss -> (None, Repeat)
+  | Some Empty ->
+      let temp = List.Assoc.remove grid ~equal:equal_board_cell cell in
+      let new_grid = List.Assoc.add temp ~equal:equal_board_cell cell Miss in
+      let new_board = (new_grid, sunk_ships) in
+      (new_board, Missed)
+  | Some Miss -> (b, Repeat)
   | Some (Occupied ship) ->
       let temp = List.Assoc.remove grid ~equal:equal_board_cell cell in
       let new_grid =
         List.Assoc.add temp ~equal:equal_board_cell cell (Hit ship)
       in
-      (* TODO: Check if a ship was sunk and add to sunk_ships list *)
-      let new_board = (new_grid, sunk_ships) in
-      (Some new_board, Success)
-  | Some (Hit _) -> (None, Repeat)
-  | Some (Sunk _) -> (None, Repeat)
-  | None -> (None, Invalid)
+      let ship_cells =
+        get_ship_cells ship.position ship.length ship.orientation
+      in
+      let ship_sunk =
+        List.fold ship_cells ~init:true ~f:(fun acc cur_cell ->
+            match List.Assoc.find new_grid ~equal:equal_board_cell cur_cell with
+            | Some (Hit _) -> acc && true
+            | Some _ -> false
+            | None -> false)
+      in
+      let new_board =
+        if ship_sunk then (new_grid, ship :: sunk_ships)
+        else (new_grid, sunk_ships)
+      in
+      (new_board, Success)
+  | Some (Hit _) -> (b, Repeat)
+  | None -> (b, Invalid)
 
 let place_ship (s : ship_type) (l : int) (b : board)
     (placement : board_cell * ship_orientation) : board option =
@@ -144,7 +160,6 @@ let board_to_string (b : board) : string =
     | (x, y), Occupied _ ->
         sprintf "%s O(%i,%c) %s" acc x y (check_for_new_line y)
     | (x, y), Hit _ -> sprintf "%s H(%i,%c) %s" acc x y (check_for_new_line y)
-    | (x, y), Sunk _ -> sprintf "%s S(%i,%c) %s" acc x y (check_for_new_line y)
   in
 
   grid |> List.fold ~init:"" ~f:aux

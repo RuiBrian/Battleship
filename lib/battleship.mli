@@ -1,12 +1,13 @@
 (** Five types of ships corresponding to the 2002 Hasbro version of the game. *)
 type ship_type = Carrier | Battleship | Destroyer | Submarine | Patrol
-[@@deriving compare, yojson]
+[@@deriving equal, compare, yojson]
 
 type board_cell = int * char [@@deriving equal, compare, yojson]
 (** An [(int, char)] pair that corresponds to a position/cell on the board. *)
 
 (** A ship can be oriented either horizontally or vertically. *)
-type ship_orientation = Horizontal | Vertical [@@deriving compare, yojson]
+type ship_orientation = Horizontal | Vertical
+[@@deriving equal, compare, yojson]
 
 type ship = {
   ship_type : ship_type;
@@ -14,11 +15,11 @@ type ship = {
   position : board_cell;
   orientation : ship_orientation;
 }
-[@@deriving compare, yojson]
+[@@deriving equal, compare, yojson]
 (** A ship consists of a [ship_type], its length, its position, and its orientation. *)
 
 (** Describes the current state of a given cell. *)
-type cell_state = Empty | Miss | Occupied of ship | Hit of ship | Sunk of ship
+type cell_state = Empty | Miss | Occupied of ship | Hit of ship
 [@@deriving compare, yojson]
 
 (** Summarizes the result of an attempted attack by a player. *)
@@ -36,7 +37,7 @@ val create_board : board
 val is_game_over : board -> bool
 (** [is_game_over b] checks if all ships on [b] have been destroyed. *)
 
-val attack_cell : board -> board_cell -> board option * attack_result
+val attack_cell : board -> board_cell -> board * attack_result
 (** [attack_cell b c] attempts to attack [c] on [b]. Returns [Some(board)] on
 success and [None] on failure. *)
 
