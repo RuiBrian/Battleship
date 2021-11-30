@@ -2,6 +2,6 @@
  (name battleship)
  (modules battleship)
  (public_name battleship)
- (libraries core)
+ (libraries core yojson)
  (preprocess
-  (pps ppx_jane)))
+  (pps ppx_jane ppx_deriving_yojson)))

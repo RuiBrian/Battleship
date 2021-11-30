@@ -1,11 +1,11 @@
 open Core
 
 type ship_type = Carrier | Battleship | Destroyer | Submarine | Patrol
-[@@deriving compare]
+[@@deriving compare, yojson]
 
-type board_cell = int * char [@@deriving equal, compare]
+type board_cell = int * char [@@deriving equal, compare, yojson]
 
-type ship_orientation = Horizontal | Vertical [@@deriving compare]
+type ship_orientation = Horizontal | Vertical [@@deriving compare, yojson]
 
 type ship = {
   ship_type : ship_type;
@@ -13,16 +13,16 @@ type ship = {
   position : board_cell;
   orientation : ship_orientation;
 }
-[@@deriving compare]
+[@@deriving compare, yojson]
 
 type cell_state = Empty | Miss | Occupied of ship | Hit of ship | Sunk of ship
-[@@deriving compare]
+[@@deriving compare, yojson]
 
 type attack_result = Missed | Success | Repeat | Invalid [@@deriving equal]
 
-type grid = (board_cell, cell_state) List.Assoc.t
+type grid = (board_cell * cell_state) list [@@deriving yojson]
 
-type board = grid * ship list
+type board = grid * ship list [@@deriving yojson]
 
 let rows = [ 0; 1; 2; 3; 4; 5; 6; 7; 8; 9 ]
 
@@ -123,7 +123,18 @@ let place_ship (s : ship_type) (l : int) (b : board)
 (******** For testing ********)
 
 let board_to_string (b : board) : string =
-  let grid, _ = b in
+  let sort_board b =
+    let grid, sunk_ships = b in
+    let lex_cmp ((x, y), _) ((x', y'), _) =
+      let compare_row = compare x x' in
+      if compare_row <> 0 then compare_row else Char.compare y y'
+    in
+    (List.sort ~compare:lex_cmp grid, sunk_ships)
+  in
+
+  let sorted_board = sort_board b in
+
+  let grid, _ = sorted_board in
 
   let check_for_new_line col = match col with 'J' -> "\n" | _ -> "" in
 
@@ -139,14 +150,4 @@ let board_to_string (b : board) : string =
 
   grid |> List.fold ~init:"" ~f:aux
 
-let print_board (b : board) : unit =
-  let sort_board b =
-    let grid, sunk_ships = b in
-    let lex_cmp ((x, y), _) ((x', y'), _) =
-      let compare_row = compare x x' in
-      if compare_row <> 0 then compare_row else Char.compare y y'
-    in
-    (List.sort ~compare:lex_cmp grid, sunk_ships)
-  in
-  
-  b |> sort_board |> board_to_string |> print_endline
+let print_board (b : board) : unit = b |> board_to_string |> print_endline

@@ -1,14 +1,12 @@
-open Core
-
 (** Five types of ships corresponding to the 2002 Hasbro version of the game. *)
 type ship_type = Carrier | Battleship | Destroyer | Submarine | Patrol
-[@@deriving compare]
+[@@deriving compare, yojson]
 
-type board_cell = int * char [@@deriving equal, compare]
+type board_cell = int * char [@@deriving equal, compare, yojson]
 (** An [(int, char)] pair that corresponds to a position/cell on the board. *)
 
 (** A ship can be oriented either horizontally or vertically. *)
-type ship_orientation = Horizontal | Vertical [@@deriving compare]
+type ship_orientation = Horizontal | Vertical [@@deriving compare, yojson]
 
 type ship = {
   ship_type : ship_type;
@@ -16,20 +14,20 @@ type ship = {
   position : board_cell;
   orientation : ship_orientation;
 }
-[@@deriving compare]
+[@@deriving compare, yojson]
 (** A ship consists of a [ship_type], its length, its position, and its orientation. *)
 
 (** Describes the current state of a given cell. *)
 type cell_state = Empty | Miss | Occupied of ship | Hit of ship | Sunk of ship
-[@@deriving compare]
+[@@deriving compare, yojson]
 
 (** Summarizes the result of an attempted attack by a player. *)
 type attack_result = Missed | Success | Repeat | Invalid [@@deriving equal]
 
-type grid = (board_cell, cell_state) List.Assoc.t
+type grid = (board_cell * cell_state) list [@@deriving yojson]
 (** A grid is represented by an association list*)
 
-type board = grid * ship list
+type board = grid * ship list [@@deriving yojson]
 (** A game board is represented by a grid and a list of sunk ships. *)
 
 val create_board : board
