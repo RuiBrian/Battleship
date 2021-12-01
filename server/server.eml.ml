@@ -185,6 +185,25 @@ let get_turn_handler _ =
   if game_state.player_one_turn then Dream.respond "1" else Dream.respond "2"
 
 let get_game_status_handler _ = Dream.respond "TODO"
+let ships_to_place_handler request =
+  let player = int_of_string @@ Dream.param "player" request in
+  let to_string ship_type =
+    match ship_type with
+    | Carrier -> "Carrier"
+    | Battleship -> "Battleship"
+    | Destroyer -> "Destroyer"
+    | Submarine -> "Submarine"
+    | Patrol -> "Patrol"
+  in
+
+  match player with
+  | 1 ->
+      Dream.respond
+      @@ List.to_string ~f:to_string game_state.player_one_ships_to_place
+  | 2 ->
+      Dream.respond
+      @@ List.to_string ~f:to_string game_state.player_two_ships_to_place
+  | _ -> Dream.respond ~status:`Bad_Request "Invalid player"
 
 let () =
   Dream.run @@ Dream.logger
@@ -199,6 +218,7 @@ let () =
            ];
          Dream.scope "/battleship" []
            [
+             Dream.get "/ships-to-place/:player" ships_to_place_handler;
              Dream.post "/place-ship/:player" place_ship_handler;
              Dream.post "/attack-cell/:player" attack_cell_handler;
            ];
