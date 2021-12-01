@@ -35,8 +35,6 @@ let homepage_handler _ =
   let header = "<html>\n<body>\n<h1>Battleship.</h1>\n</body>\n</html>" in
   Dream.html header
 
-let create_board_handler _ = Dream.respond @@ board_to_string create_board
-
 let place_ship_handler request =
   let player = int_of_string @@ Dream.param "player" request in
   let%lwt body = Dream.body request in
@@ -186,16 +184,21 @@ let connection_handler _ =
 let get_turn_handler _ =
   if game_state.player_one_turn then Dream.respond "1" else Dream.respond "2"
 
+let get_game_status_handler _ = Dream.respond "TODO"
+
 let () =
   Dream.run @@ Dream.logger
   @@ Dream.router
        [
          Dream.get "/" homepage_handler;
          Dream.post "/connect" connection_handler;
-         Dream.scope "/battleship" []
+         Dream.scope "/info" []
            [
              Dream.get "/player-turn" get_turn_handler;
-             Dream.get "/create-board" create_board_handler;
+             Dream.get "/game-status" get_game_status_handler;
+           ];
+         Dream.scope "/battleship" []
+           [
              Dream.post "/place-ship/:player" place_ship_handler;
              Dream.post "/attack-cell/:player" attack_cell_handler;
            ];
