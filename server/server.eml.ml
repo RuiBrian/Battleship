@@ -157,6 +157,7 @@ let attack_cell_handler request =
         | new_board, Success ->
             game_state.player_one_board <- new_board;
             game_state.player_one_turn <- not game_state.player_one_turn;
+            if is_game_over new_board then game_state.winner <- Some player;
             Dream.respond @@ board_to_string game_state.player_one_board
         | _, Repeat -> Dream.respond "Cell already attacked; try again"
         | _, Invalid -> Dream.respond "Invalid cell; try again")
@@ -169,6 +170,7 @@ let attack_cell_handler request =
         | new_board, Success ->
             game_state.player_two_board <- new_board;
             game_state.player_one_turn <- not game_state.player_one_turn;
+            if is_game_over new_board then game_state.winner <- Some player;
             Dream.respond @@ board_to_string game_state.player_two_board
         | _, Repeat -> Dream.respond "Cell already attacked; try again"
         | _, Invalid -> Dream.respond "Invalid cell; try again")
@@ -192,6 +194,13 @@ let get_game_winner_handler _ =
   | Some 1 -> Dream.respond "Player 1"
   | Some 2 -> Dream.respond "Player 2"
   | Some _ -> Dream.respond ~status:`Bad_Request "Invalid player"
+
+let get_ready_status_handler _ =
+  if
+    List.length game_state.player_one_ships_to_place = 0
+    && List.length game_state.player_two_ships_to_place = 0
+  then Dream.respond "Ready"
+  else Dream.respond "Not Ready"
 
 let ships_to_place_handler request =
   let player = int_of_string @@ Dream.param "player" request in
@@ -227,6 +236,7 @@ let () =
          Dream.post "/connect" connection_handler;
          Dream.scope "/info" []
            [
+             Dream.get "/players-ready" get_ready_status_handler;
              Dream.get "/player-turn" get_turn_handler;
              Dream.get "/game-status" get_game_winner_handler;
            ];
@@ -235,6 +245,8 @@ let () =
              Dream.get "/ships-to-place/:player" ships_to_place_handler;
              Dream.post "/place-ship/:player" place_ship_handler;
              Dream.post "/attack-cell/:player" attack_cell_handler;
+             (* Dream.get "/get-tracking-board/:player" get_tracking_board_handler;
+                Dream.get "/get-primary-board/:player" get_primary_board_handler; *)
            ];
        ]
   @@ Dream.not_found
