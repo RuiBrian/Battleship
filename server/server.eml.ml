@@ -18,6 +18,7 @@ type state = {
   mutable player_one_ships_to_place : ship_type list;
   mutable player_two_ships_to_place : ship_type list;
   mutable player_one_turn : bool;
+  mutable winner : int option;
 }
 
 let game_state =
@@ -29,6 +30,7 @@ let game_state =
     player_two_ships_to_place =
       [ Carrier; Battleship; Destroyer; Submarine; Patrol ];
     player_one_turn = true;
+    winner = None;
   }
 
 let homepage_handler _ =
@@ -179,12 +181,18 @@ let connection_handler _ =
   else
     Dream.respond
       ~headers:[ ("Connection", "keep-alive") ]
-      ("Connected! Total connections: " ^ string_of_int !num_connections)
+      (string_of_int !num_connections)
 
 let get_turn_handler _ =
   if game_state.player_one_turn then Dream.respond "1" else Dream.respond "2"
 
-let get_game_status_handler _ = Dream.respond "TODO"
+let get_game_winner_handler _ =
+  match game_state.winner with
+  | None -> Dream.respond "None"
+  | Some 1 -> Dream.respond "Player 1"
+  | Some 2 -> Dream.respond "Player 2"
+  | Some _ -> Dream.respond ~status:`Bad_Request "Invalid player"
+
 let ships_to_place_handler request =
   let player = int_of_string @@ Dream.param "player" request in
   let to_string ship_type =
@@ -198,11 +206,17 @@ let ships_to_place_handler request =
 
   match player with
   | 1 ->
-      Dream.respond
-      @@ List.to_string ~f:to_string game_state.player_one_ships_to_place
+      if List.length game_state.player_one_ships_to_place = 0 then
+        Dream.respond ~status:`No_Content ""
+      else
+        Dream.respond
+        @@ List.to_string ~f:to_string game_state.player_one_ships_to_place
   | 2 ->
-      Dream.respond
-      @@ List.to_string ~f:to_string game_state.player_two_ships_to_place
+      if List.length game_state.player_two_ships_to_place = 0 then
+        Dream.respond ~status:`No_Content ""
+      else
+        Dream.respond
+        @@ List.to_string ~f:to_string game_state.player_two_ships_to_place
   | _ -> Dream.respond ~status:`Bad_Request "Invalid player"
 
 let () =
@@ -214,7 +228,7 @@ let () =
          Dream.scope "/info" []
            [
              Dream.get "/player-turn" get_turn_handler;
-             Dream.get "/game-status" get_game_status_handler;
+             Dream.get "/game-status" get_game_winner_handler;
            ];
          Dream.scope "/battleship" []
            [
