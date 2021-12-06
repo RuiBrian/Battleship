@@ -4,4 +4,4 @@
  (public_name battleship)
  (libraries core yojson)
  (preprocess
-  (pps ppx_jane ppx_deriving_yojson)))
+  (pps bisect_ppx ppx_jane ppx_deriving_yojson)))
