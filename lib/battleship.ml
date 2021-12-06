@@ -1,5 +1,7 @@
 open Core
 
+[@@@coverage off]
+
 type ship_type = Carrier | Battleship | Destroyer | Submarine | Patrol
 [@@deriving equal, compare, yojson]
 
@@ -24,6 +26,8 @@ type attack_result = Missed | Success | Repeat | Invalid [@@deriving equal]
 type grid = (board_cell * cell_state) list [@@deriving yojson]
 
 type board = grid * ship list [@@deriving yojson]
+
+[@@@coverage on]
 
 let rows = [ 0; 1; 2; 3; 4; 5; 6; 7; 8; 9 ]
 
@@ -135,7 +139,7 @@ let place_ship (s : ship_type) (l : int) (b : board)
         | true -> None
       else None
 
-(******** For testing ********)
+(******** Testing/IO/Util functions ********)
 
 let board_to_string (b : board) : string =
   let sort_board b =
