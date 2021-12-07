@@ -62,7 +62,7 @@ let attack_cell (b : board) (cell : board_cell) : board * attack_result =
       let new_grid = List.Assoc.add temp ~equal:equal_board_cell cell Miss in
       let new_board = (new_grid, sunk_ships) in
       (new_board, Missed)
-  | Some Miss -> (b, Repeat)
+  | Some Miss | Some (Hit _) -> (b, Repeat)
   | Some (Occupied ship) ->
       let temp = List.Assoc.remove grid ~equal:equal_board_cell cell in
       let new_grid =
@@ -75,15 +75,13 @@ let attack_cell (b : board) (cell : board_cell) : board * attack_result =
         List.fold ship_cells ~init:true ~f:(fun acc cur_cell ->
             match List.Assoc.find new_grid ~equal:equal_board_cell cur_cell with
             | Some (Hit _) -> acc && true
-            | Some _ -> false
-            | None -> false)
+            | Some _ | None -> false)
       in
       let new_board =
         if ship_sunk then (new_grid, ship :: sunk_ships)
         else (new_grid, sunk_ships)
       in
       (new_board, Success)
-  | Some (Hit _) -> (b, Repeat)
   | None -> (b, Invalid)
 
 let place_ship (s : ship_type) (l : int) (b : board)
@@ -106,10 +104,8 @@ let place_ship (s : ship_type) (l : int) (b : board)
   let cells_are_occupied (cells : board_cell list) (g : grid) : bool =
     let aux acc cur =
       match List.Assoc.find g ~equal:equal_board_cell cur with
-      | Some Empty -> acc
-      | Some Miss -> acc
+      | Some Empty | Some Miss | None -> acc
       | Some _ -> acc || true
-      | None -> acc
     in
     List.fold cells ~init:false ~f:aux
   in
