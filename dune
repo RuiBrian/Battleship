@@ -7,7 +7,8 @@
   src/game.ml
   src/dune
   tests/tests.ml
-  tests/dune)
+  tests/dune
+  README.md)
  (targets battleship.zip)
  (action
   (run zip -R battleship.zip %{deps})))
