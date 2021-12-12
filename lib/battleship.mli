@@ -50,6 +50,9 @@ val place_ship :
 (** [place_ship s b (c, o)] attempts to place [s] on [b] at [c] oriented
 according to [o]. Returns [Some(board)] on success and [None] on failure. *)
 
+val ship_type_to_string : ship_type -> string
+(** [ship_type_to_string s] converts [s] to a string representation. *)
+
 val board_to_string : board -> string
 (** [board_to_string b] converts [b] to a string representation for testing. *)
 

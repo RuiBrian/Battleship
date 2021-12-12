@@ -137,6 +137,14 @@ let place_ship (s : ship_type) (l : int) (b : board)
 
 (******** Testing/IO/Util functions ********)
 
+let ship_type_to_string (s : ship_type) : string =
+  match s with
+  | Carrier -> "Carrier"
+  | Battleship -> "Battleship"
+  | Destroyer -> "Destroyer"
+  | Submarine -> "Submarine"
+  | Patrol -> "Patrol"
+
 let board_to_string (b : board) : string =
   let sort_board b =
     let grid, sunk_ships = b in
