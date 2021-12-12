@@ -11,8 +11,8 @@
  (synopsis "A simple two-player implementation of Battleship")
  (description
   "A simple two-player implementation of the board game Battleship using a webserver. Each player first places all of their ships. Then, they take turns firing at cells in an attempt to sink the enemy ships.")
- (homepage "")
- (bug_reports "")
+ (homepage "https://github.com/RuiBrian/Battleship")
+ (bug_reports "https://github.com/RuiBrian/Battleship/issues")
  (depends
   (ounit2
    (>= 2.2.4))
@@ -24,13 +24,13 @@
    (>= 1.0.0~alpha2))
   (lwt
    (>= 5.4.2))
-  (ppx-jane
+  (ppx_jane
    (>= 0.14.0))
-  (bisect-ppx
+  (bisect_ppx
    (>= 2.7.0))
-  (ppx-deriving-yojson
+  (ppx_deriving_yojson
    (>= 3.6.1))
-  (lwt-ppx
+  (lwt_ppx
    (>= 2.0.3))
   (cohttp-lwt-unix
    (>= 4.0.0))))
