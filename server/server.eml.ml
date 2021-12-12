@@ -228,11 +228,19 @@ let ships_to_place_handler request =
         @@ List.to_string ~f:to_string game_state.player_two_ships_to_place
   | _ -> Dream.respond ~status:`Bad_Request "Invalid player"
 
-(* TODO:
-   let get_primary_board_handler _ = *)
+let get_primary_board_handler request =
+  let player = int_of_string @@ Dream.param "player" request in
+  match player with
+  | 1 -> Dream.respond @@ to_primary_board_string game_state.player_two_board
+  | 2 -> Dream.respond @@ to_primary_board_string game_state.player_one_board
+  | _ -> Dream.respond ~status:`Bad_Request "Invalid player"
 
-(* TODO:
-   let get_tracking_board_handler _ = *)
+let get_tracking_board_handler request =
+  let player = int_of_string @@ Dream.param "player" request in
+  match player with
+  | 1 -> Dream.respond @@ to_tracking_board_string game_state.player_one_board
+  | 2 -> Dream.respond @@ to_tracking_board_string game_state.player_two_board
+  | _ -> Dream.respond ~status:`Bad_Request "Invalid player"
 
 let () =
   Dream.run @@ Dream.logger
@@ -249,11 +257,10 @@ let () =
          Dream.scope "/battleship" []
            [
              Dream.get "/ships-to-place/:player" ships_to_place_handler;
+             Dream.get "/get-primary-board/:player" get_primary_board_handler;
              Dream.post "/place-ship/:player" place_ship_handler;
              Dream.post "/attack-cell/:player" attack_cell_handler;
-             (* TODO:
-                Dream.get "/get-tracking-board/:player" get_tracking_board_handler;
-                Dream.get "/get-primary-board/:player" get_primary_board_handler; *)
+             Dream.get "/get-tracking-board/:player" get_tracking_board_handler;
            ];
        ]
   @@ Dream.not_found
