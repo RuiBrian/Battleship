@@ -1,5 +1,7 @@
 (lang dune 2.9)
 
+(name battleship)
+
 (generate_opam_files true)
 
 (authors "Brian Rui")
@@ -7,7 +9,7 @@
 (maintainers "brui1@jhu.edu")
 
 (package
- (name "battleship")
+ (name battleship)
  (synopsis "A simple two-player implementation of Battleship")
  (description
   "A simple two-player implementation of the board game Battleship using a webserver. Each player first places all of their ships. Then, they take turns firing at cells in an attempt to sink the enemy ships.")
