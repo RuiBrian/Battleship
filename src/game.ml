@@ -37,6 +37,14 @@ let connect () =
     Lwt_io.printl @@ "Connected as Player " ^ body ^ ". Place your ships!")
 
 let rec place_ships () =
+  let%lwt _, data =
+    Client.get
+      (Uri.of_string @@ api_url ^ "/battleship/get-tracking-board/"
+     ^ string_of_int !player_id)
+  in
+  let%lwt body = get_body data in
+  tracking_board := body;
+
   let%lwt _ = Lwt_io.printl @@ "Your board:\n" ^ !tracking_board in
   let%lwt res, data =
     Client.get
@@ -108,7 +116,26 @@ let rec main_loop () =
 
   match body with
   | "None" ->
-      if cur_turn = !player_id then attack ()
+      if cur_turn = !player_id then (
+        let%lwt _, data =
+          Client.get
+            (Uri.of_string @@ api_url ^ "/battleship/get-primary-board/"
+           ^ string_of_int !player_id)
+        in
+        let%lwt body = get_body data in
+        primary_board := body;
+
+        let%lwt _, data =
+          Client.get
+            (Uri.of_string @@ api_url ^ "/battleship/get-tracking-board/"
+           ^ string_of_int !player_id)
+        in
+        let%lwt body = get_body data in
+        tracking_board := body;
+
+        let%lwt _ = Lwt_io.printl @@ "TRACKING BOARD:\n" ^ !tracking_board in
+        let%lwt _ = Lwt_io.printl @@ "PRIMARY BOARD:\n" ^ !primary_board in
+        attack ())
       else
         let%lwt _ = Lwt_io.printl @@ "Waiting for opponent to attack..." in
         Unix.sleep 1;
@@ -140,8 +167,7 @@ and attack () =
           let%lwt _ = Lwt_io.printl @@ body ^ ". Try again" in
           attack ()
       | 200 ->
-          primary_board := body;
-          let%lwt _ = Lwt_io.printl !primary_board in
+          (* TODO: Print hit or miss *)
           main_loop ()
       | code -> failwith @@ "API responded with code " ^ string_of_int code)
   | _ ->
