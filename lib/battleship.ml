@@ -164,4 +164,74 @@ let board_to_string (b : board) : string =
 
   grid |> List.fold ~init:"" ~f:aux
 
+let to_primary_board_string (b : board) : string =
+  let sort_board b =
+    let grid, sunk_ships = b in
+    let lex_cmp ((x, y), _) ((x', y'), _) =
+      let compare_row = compare x x' in
+      if compare_row <> 0 then compare_row else Char.compare y y'
+    in
+    (List.sort ~compare:lex_cmp grid, sunk_ships)
+  in
+
+  let top_row = "  | A | B | C | D | E | F | G | H | I | J \n" in
+  let row_separator = "------------------------------------------" in
+
+  let sorted_board = sort_board b in
+
+  let grid, _ = sorted_board in
+
+  let check_for_new_line row col =
+    if row = 9 && Char.(col = 'J') then ""
+    else
+      match col with
+      | 'J' -> "\n" ^ row_separator ^ "\n" ^ string_of_int (row + 1) ^ " |"
+      | _ -> "|"
+  in
+
+  let aux acc cur_cell =
+    match cur_cell with
+    | (x, y), Empty -> sprintf "%s   %s" acc (check_for_new_line x y)
+    | (x, y), Miss -> sprintf "%s M %s" acc (check_for_new_line x y)
+    | (x, y), Occupied _ -> sprintf "%s   %s" acc (check_for_new_line x y)
+    | (x, y), Hit _ -> sprintf "%s H %s" acc (check_for_new_line x y)
+  in
+
+  grid |> List.fold ~init:(top_row ^ row_separator ^ "\n0 |") ~f:aux
+
+let to_tracking_board_string (b : board) : string =
+  let sort_board b =
+    let grid, sunk_ships = b in
+    let lex_cmp ((x, y), _) ((x', y'), _) =
+      let compare_row = compare x x' in
+      if compare_row <> 0 then compare_row else Char.compare y y'
+    in
+    (List.sort ~compare:lex_cmp grid, sunk_ships)
+  in
+
+  let top_row = "  | A | B | C | D | E | F | G | H | I | J \n" in
+  let row_separator = "------------------------------------------" in
+
+  let sorted_board = sort_board b in
+
+  let grid, _ = sorted_board in
+
+  let check_for_new_line row col =
+    if row = 9 && Char.(col = 'J') then ""
+    else
+      match col with
+      | 'J' -> "\n" ^ row_separator ^ "\n" ^ string_of_int (row + 1) ^ " |"
+      | _ -> "|"
+  in
+
+  let aux acc cur_cell =
+    match cur_cell with
+    | (x, y), Empty -> sprintf "%s   %s" acc (check_for_new_line x y)
+    | (x, y), Miss -> sprintf "%s M %s" acc (check_for_new_line x y)
+    | (x, y), Occupied _ -> sprintf "%s O %s" acc (check_for_new_line x y)
+    | (x, y), Hit _ -> sprintf "%s H %s" acc (check_for_new_line x y)
+  in
+
+  grid |> List.fold ~init:(top_row ^ row_separator ^ "\n0 |") ~f:aux
+
 let print_board (b : board) : unit = b |> board_to_string |> print_endline

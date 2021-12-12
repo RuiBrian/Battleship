@@ -53,5 +53,13 @@ according to [o]. Returns [Some(board)] on success and [None] on failure. *)
 val board_to_string : board -> string
 (** [board_to_string b] converts [b] to a string representation for testing. *)
 
+val to_primary_board_string : board -> string
+(** [to_primary_board_string b] converts [b] to a string representation of a
+primary board. *)
+
+val to_tracking_board_string : board -> string
+(** [to_tracking_board_string b] converts [b] to a string representation of a
+tracking board. *)
+
 val print_board : board -> unit
 (** [print_board b] prints [b] to standard output. *)
