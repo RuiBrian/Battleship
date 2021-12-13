@@ -1,6 +1,6 @@
 (executable
  (name server)
- (libraries dream battleship yojson)
+ (libraries dream battleship)
  (preprocess
   (pps lwt_ppx ppx_deriving_yojson)))
 

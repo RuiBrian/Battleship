@@ -1,5 +1,5 @@
 (executable
  (name game)
- (libraries core battleship yojson lwt.unix cohttp-lwt-unix)
+ (libraries core battleship lwt.unix cohttp-lwt-unix)
  (preprocess
   (pps lwt_ppx ppx_deriving_yojson)))
