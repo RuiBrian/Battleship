@@ -139,7 +139,7 @@ let get_remaining_ships (b : board) : ship_type list =
       match List.find acc ~f:(fun s -> equal_ship_type s cur.ship_type) with
       | Some _ ->
           List.filter acc ~f:(fun s -> not @@ equal_ship_type s cur.ship_type)
-      | None -> acc)
+      | None -> failwith "Unknown ship type" [@coverage off])
 
 (******** Testing/IO/Util functions ********)
 
@@ -249,3 +249,4 @@ let to_tracking_board_string (b : board) : string =
   grid |> List.fold ~init:(top_row ^ row_separator ^ "\n0 |") ~f:aux
 
 let print_board (b : board) : unit = b |> board_to_string |> print_endline
+  [@@coverage off]
