@@ -186,6 +186,193 @@ let test_attack_cell _ =
 
 let test_is_game_over _ = assert_equal false @@ B.is_game_over B.create_board
 
+let test_ship_type_to_string _ =
+  assert_equal "Carrier" @@ B.ship_type_to_string B.Carrier;
+  assert_equal "Battleship" @@ B.ship_type_to_string B.Battleship;
+  assert_equal "Destroyer" @@ B.ship_type_to_string B.Destroyer;
+  assert_equal "Submarine" @@ B.ship_type_to_string B.Submarine;
+  assert_equal "Patrol" @@ B.ship_type_to_string B.Patrol
+
+let test_get_remaining_ships _ =
+  assert_equal [ B.Carrier; B.Battleship; B.Destroyer; B.Submarine; B.Patrol ]
+  @@ B.get_remaining_ships B.create_board;
+  let sunk_ships =
+    [
+      {
+        B.ship_type = B.Carrier;
+        length = 5;
+        position = (1, 'A');
+        orientation = Horizontal;
+      };
+      {
+        B.ship_type = B.Patrol;
+        length = 2;
+        position = (2, 'D');
+        orientation = Vertical;
+      };
+    ]
+  in
+  let grid, _ = B.create_board in
+  let test_board = (grid, sunk_ships) in
+  assert_equal [ B.Battleship; B.Destroyer; B.Submarine ]
+  @@ B.get_remaining_ships test_board
+
+let test_get_primary_board _ =
+  let test_board =
+    match B.place_ship Patrol 2 B.create_board ((0, 'A'), B.Horizontal) with
+    | Some board -> board
+    | None -> B.create_board
+  in
+  assert_equal
+    "  | A | B | C | D | E | F | G | H | I | J \n\
+     ------------------------------------------\n\
+     0 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     1 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     2 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     3 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     4 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     5 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     6 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     7 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     8 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     9 |   |   |   |   |   |   |   |   |   |   "
+  @@ B.to_primary_board_string test_board;
+  let result_board, _ = B.attack_cell test_board (0, 'A') in
+  assert_equal
+    "  | A | B | C | D | E | F | G | H | I | J \n\
+     ------------------------------------------\n\
+     0 | H |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     1 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     2 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     3 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     4 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     5 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     6 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     7 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     8 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     9 |   |   |   |   |   |   |   |   |   |   "
+  @@ B.to_primary_board_string result_board;
+  let result_board, _ = B.attack_cell result_board (1, 'B') in
+  assert_equal
+    "  | A | B | C | D | E | F | G | H | I | J \n\
+     ------------------------------------------\n\
+     0 | H |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     1 |   | M |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     2 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     3 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     4 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     5 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     6 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     7 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     8 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     9 |   |   |   |   |   |   |   |   |   |   "
+  @@ B.to_primary_board_string result_board
+
+let test_get_tracking_board _ =
+  let test_board =
+    match B.place_ship Patrol 2 B.create_board ((0, 'A'), B.Horizontal) with
+    | Some board -> board
+    | None -> B.create_board
+  in
+  assert_equal
+    "  | A | B | C | D | E | F | G | H | I | J \n\
+     ------------------------------------------\n\
+     0 | O | O |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     1 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     2 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     3 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     4 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     5 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     6 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     7 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     8 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     9 |   |   |   |   |   |   |   |   |   |   "
+  @@ B.to_tracking_board_string test_board;
+  let result_board, _ = B.attack_cell test_board (0, 'A') in
+  assert_equal
+    "  | A | B | C | D | E | F | G | H | I | J \n\
+     ------------------------------------------\n\
+     0 | H | O |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     1 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     2 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     3 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     4 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     5 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     6 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     7 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     8 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     9 |   |   |   |   |   |   |   |   |   |   "
+  @@ B.to_tracking_board_string result_board;
+  let result_board, _ = B.attack_cell result_board (1, 'B') in
+  assert_equal
+    "  | A | B | C | D | E | F | G | H | I | J \n\
+     ------------------------------------------\n\
+     0 | H | O |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     1 |   | M |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     2 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     3 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     4 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     5 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     6 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     7 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     8 |   |   |   |   |   |   |   |   |   |   \n\
+     ------------------------------------------\n\
+     9 |   |   |   |   |   |   |   |   |   |   "
+  @@ B.to_tracking_board_string result_board
+
 let battleship_tests =
   "Battleship Tests"
   >: test_list
@@ -194,8 +381,11 @@ let battleship_tests =
          "Place ships on board" >:: test_place_ship;
          "Attack a cell on the board" >:: test_attack_cell;
          "Check game status" >:: test_is_game_over;
+         "Ship type to string" >:: test_ship_type_to_string;
+         "Get unsunk ships" >:: test_get_remaining_ships;
+         "Get primary board" >:: test_get_primary_board;
+         "Get tracking board" >:: test_get_tracking_board;
        ]
 
 let series = "Tests" >::: [ battleship_tests ]
-
 let () = run_test_tt_main series
