@@ -50,6 +50,10 @@ val place_ship :
 (** [place_ship s b (c, o)] attempts to place [s] on [b] at [c] oriented
 according to [o]. Returns [Some(board)] on success and [None] on failure. *)
 
+val get_remaining_ships : board -> ship_type list
+(** [get_remaining_ships b] returns a [ship_type list] corresponding to the
+ships that have not been sunk yet on [b]. *)
+
 val ship_type_to_string : ship_type -> string
 (** [ship_type_to_string s] converts [s] to a string representation. *)
 

@@ -22,15 +22,12 @@ type cell_state = Empty | Miss | Occupied of ship | Hit of ship
 [@@deriving compare, yojson]
 
 type attack_result = Missed | Success | Repeat | Invalid [@@deriving equal]
-
 type grid = (board_cell * cell_state) list [@@deriving yojson]
-
 type board = grid * ship list [@@deriving yojson]
 
 [@@@coverage on]
 
 let rows = [ 0; 1; 2; 3; 4; 5; 6; 7; 8; 9 ]
-
 let columns = [ 'A'; 'B'; 'C'; 'D'; 'E'; 'F'; 'G'; 'H'; 'I'; 'J' ]
 
 let create_board : board =
@@ -134,6 +131,15 @@ let place_ship (s : ship_type) (l : int) (b : board)
             Some (place_ship_at_cells ship_cells grid orientation, sunk_ships)
         | true -> None
       else None
+
+let get_remaining_ships (b : board) : ship_type list =
+  let all_ships = [ Carrier; Battleship; Destroyer; Submarine; Patrol ] in
+  let _, sunk_ships = b in
+  List.fold sunk_ships ~init:all_ships ~f:(fun acc cur ->
+      match List.find acc ~f:(fun s -> equal_ship_type s cur.ship_type) with
+      | Some _ ->
+          List.filter acc ~f:(fun s -> not @@ equal_ship_type s cur.ship_type)
+      | None -> acc)
 
 (******** Testing/IO/Util functions ********)
 
