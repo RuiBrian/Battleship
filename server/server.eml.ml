@@ -61,6 +61,7 @@ let place_ship_handler request =
     | _ -> failwith "Invalid ship"
   in
 
+  (* TODO: Error checking for row and col *)
   let board_cell =
     match String.split ~on:' ' place_ship_request_json.cell with
     | [ row; col ] -> (int_of_string row, Char.of_string col)
@@ -153,27 +154,29 @@ let attack_cell_handler request =
         | new_board, Missed ->
             game_state.player_two_board <- new_board;
             game_state.player_one_turn <- not game_state.player_one_turn;
-            Dream.respond @@ board_to_string game_state.player_two_board
+            Dream.respond ~status:`No_Content "Miss"
         | new_board, Success ->
             game_state.player_two_board <- new_board;
             game_state.player_one_turn <- not game_state.player_one_turn;
             if is_game_over new_board then game_state.winner <- Some player;
-            Dream.respond @@ board_to_string game_state.player_two_board
-        | _, Repeat -> Dream.respond "Cell already attacked; try again"
-        | _, Invalid -> Dream.respond "Invalid cell; try again")
+            Dream.respond "Hit!"
+        | _, Repeat ->
+            Dream.respond ~status:`Bad_Request "Cell already attacked"
+        | _, Invalid -> Dream.respond ~status:`Bad_Request "Invalid cell")
     | 2 -> (
         match attack_cell game_state.player_one_board target_cell with
         | new_board, Missed ->
             game_state.player_one_board <- new_board;
             game_state.player_one_turn <- not game_state.player_one_turn;
-            Dream.respond @@ board_to_string game_state.player_one_board
+            Dream.respond ~status:`No_Content "Miss"
         | new_board, Success ->
             game_state.player_one_board <- new_board;
             game_state.player_one_turn <- not game_state.player_one_turn;
             if is_game_over new_board then game_state.winner <- Some player;
-            Dream.respond @@ board_to_string game_state.player_one_board
-        | _, Repeat -> Dream.respond "Cell already attacked; try again"
-        | _, Invalid -> Dream.respond "Invalid cell; try again")
+            Dream.respond "Hit!"
+        | _, Repeat ->
+            Dream.respond ~status:`Bad_Request "Cell already attacked"
+        | _, Invalid -> Dream.respond ~status:`Bad_Request "Invalid cell")
     | _ -> failwith "Invalid player"
 
 let connection_handler _ =

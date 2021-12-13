@@ -22,9 +22,7 @@ let primary_board = ref ""
 
 (* Tracking board for the player, represented as a string*)
 let tracking_board = ref ""
-
 let get_body body = body |> Cohttp_lwt.Body.to_string
-
 let get_res_code res = res |> Response.status |> Code.code_of_status
 
 let connect () =
@@ -166,8 +164,8 @@ and attack () =
       | 400 ->
           let%lwt _ = Lwt_io.printl @@ body ^ ". Try again" in
           attack ()
-      | 200 ->
-          (* TODO: Print hit or miss *)
+      | 204 | 200 ->
+          let%lwt _ = Lwt_io.printl @@ body in
           main_loop ()
       | code -> failwith @@ "API responded with code " ^ string_of_int code)
   | _ ->
