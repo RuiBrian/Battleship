@@ -239,6 +239,19 @@ let get_tracking_board_handler request =
   | 2 -> Dream.respond @@ to_tracking_board_string game_state.player_two_board
   | _ -> Dream.respond ~status:`Bad_Request "Invalid player: "
 
+let get_remaining_ships_handler request =
+  let player = int_of_string @@ Dream.param "player" request in
+  match player with
+  | 1 ->
+      get_remaining_ships game_state.player_two_board
+      |> List.to_string ~f:ship_type_to_string
+      |> Dream.respond
+  | 2 ->
+      get_remaining_ships game_state.player_one_board
+      |> List.to_string ~f:ship_type_to_string
+      |> Dream.respond
+  | _ -> Dream.respond ~status:`Bad_Request "Invalid player: "
+
 let () =
   Dream.run @@ Dream.logger
   @@ Dream.router
@@ -256,6 +269,8 @@ let () =
              Dream.get "/ships-to-place/:player" ships_to_place_handler;
              Dream.get "/get-primary-board/:player" get_primary_board_handler;
              Dream.get "/get-tracking-board/:player" get_tracking_board_handler;
+             Dream.get "/get-remaining-ships/:player"
+               get_remaining_ships_handler;
              Dream.post "/place-ship/:player" place_ship_handler;
              Dream.post "/attack-cell/:player" attack_cell_handler;
            ];

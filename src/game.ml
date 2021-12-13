@@ -55,7 +55,7 @@ let rec place_ships () =
   match res_code with
   | 204 -> Lwt_io.printl @@ "All ships placed!"
   | 200 -> (
-      let%lwt _ = Lwt_io.printl @@ "Remaining ships to place\n" ^ body in
+      let%lwt _ = Lwt_io.printl @@ "Remaining ships to place:\n" ^ body in
       let%lwt line = Lwt_io.read_line Lwt_io.stdin in
       match String.split ~on:' ' line with
       | [ ship_type; row; col; orientation ] -> (
@@ -141,6 +141,15 @@ let rec main_loop () =
   | winner -> Lwt_io.printl @@ winner ^ " wins!"
 
 and attack () =
+  let%lwt _ = Lwt_io.printl "Remaining ships to sink:" in
+  let%lwt _, data =
+    Client.get
+      (Uri.of_string @@ api_url ^ "/battleship/get-remaining-ships/"
+     ^ string_of_int !player_id)
+  in
+  let%lwt body = get_body data in
+  let%lwt _ = Lwt_io.printl body in
+
   let%lwt _ = Lwt_io.printl "Enter a coordinate to attack!" in
   let%lwt line = Lwt_io.read_line Lwt_io.stdin in
   match String.split ~on:' ' line with
@@ -165,7 +174,7 @@ and attack () =
           let%lwt _ = Lwt_io.printl @@ body ^ ". Try again" in
           attack ()
       | 204 | 200 ->
-          let%lwt _ = Lwt_io.printl @@ body in
+          let%lwt _ = Lwt_io.printl body in
           main_loop ()
       | code -> failwith @@ "API responded with code " ^ string_of_int code)
   | _ ->
