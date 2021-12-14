@@ -37,6 +37,10 @@ val create_board : board
 val is_game_over : board -> bool
 (** [is_game_over b] checks if all ships on [b] have been destroyed. *)
 
+val valid_request : string -> string -> string list -> bool
+(** [is_valid_request s o b] checks if [s] is a valid [ship_type], [o]
+is a valid [ship_orientation], and [b] is a valid coordinate list. *)
+
 val attack_cell : board -> board_cell -> board * attack_result
 (** [attack_cell b c] attempts to attack [c] on [b]. Returns [Some(board)] on
 success and [None] on failure. *)

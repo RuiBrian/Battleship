@@ -41,6 +41,37 @@ let create_board : board =
 let is_game_over (b : board) : bool =
   match b with _, sunk_ships -> List.length sunk_ships = 5
 
+let valid_request (ship_type : string) (orientation : string)
+    (board_cell_str_list : string list) : bool =
+  let validate_type =
+    match ship_type with
+    | "Carrier" | "carrier" -> true
+    | "Battleship" | "battleship" -> true
+    | "Destroyer" | "destroyer" -> true
+    | "Submarine" | "submarine" -> true
+    | "Patrol" | "patrol" -> true
+    | _ -> false
+  in
+  let validate_orientation =
+    match orientation with
+    | "Horizontal" | "horizontal" -> true
+    | "Vertical" | "vertical" -> true
+    | _ -> false
+  in
+  let validate_cell =
+    if
+      List.length board_cell_str_list = 2
+      && Str.string_match (Str.regexp "[0-9]+$")
+           (List.nth_exn board_cell_str_list 0)
+           0
+      && Str.string_match (Str.regexp "[A-J]+$")
+           (List.nth_exn board_cell_str_list 1)
+           0
+    then true
+    else false
+  in
+  validate_type && validate_orientation && validate_cell
+
 let get_ship_cells (start_cell : board_cell) (l : int)
     (orientation : ship_orientation) : board_cell list =
   let x, y = start_cell in

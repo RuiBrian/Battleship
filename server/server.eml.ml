@@ -1,6 +1,10 @@
 open Core
 open Battleship
 
+exception Invalid_cell
+exception Invalid_ship
+exception Invalid_orientation
+
 let num_connections = ref 0
 
 type place_ship_request_obj = {
@@ -50,78 +54,86 @@ let place_ship_handler request =
     | Ok res -> res
     | Error msg -> failwith msg
   in
-
-  let ship_type =
-    match place_ship_request_json.ship_type with
-    | "Carrier" -> Carrier
-    | "Battleship" -> Battleship
-    | "Destroyer" -> Destroyer
-    | "Submarine" -> Submarine
-    | "Patrol" -> Patrol
-    | _ -> failwith "Invalid ship"
+  let board_cell_string_list =
+    String.split ~on:' ' place_ship_request_json.cell
   in
 
-  (* TODO: Error checking for row and col *)
-  let board_cell =
-    match String.split ~on:' ' place_ship_request_json.cell with
-    | [ row; col ] -> (int_of_string row, Char.of_string col)
-    | _ -> failwith "Invalid cell"
-  in
+  if
+    not
+    @@ valid_request place_ship_request_json.ship_type
+         place_ship_request_json.orientation board_cell_string_list
+  then Dream.respond ~status:`Bad_Request "Invalid placement"
+  else
+    let ship_type =
+      match place_ship_request_json.ship_type with
+      | "Carrier" | "carrier" -> Carrier
+      | "Battleship" | "battleship" -> Battleship
+      | "Destroyer" | "destroyer" -> Destroyer
+      | "Submarine" | "submarine" -> Submarine
+      | "Patrol" | "patrol" -> Patrol
+      | _ -> raise Invalid_ship
+    in
 
-  let orientation =
-    match place_ship_request_json.orientation with
-    | "Horizontal" -> Horizontal
-    | "Vertical" -> Vertical
-    | _ -> failwith "Invalid orientation"
-  in
+    let orientation =
+      match place_ship_request_json.orientation with
+      | "Horizontal" | "horizontal" -> Horizontal
+      | "Vertical" | "vertical" -> Vertical
+      | _ -> raise Invalid_orientation
+    in
 
-  let length =
-    match ship_type with
-    | Carrier -> 5
-    | Battleship -> 4
-    | Destroyer -> 3
-    | Submarine -> 3
-    | Patrol -> 2
-  in
+    let board_cell =
+      match board_cell_string_list with
+      | [ row; col ] -> (int_of_string row, Char.of_string col)
+      | _ -> raise Invalid_cell
+    in
 
-  match player with
-  | 1 -> (
-      match
-        List.find game_state.player_one_ships_to_place ~f:(fun x ->
-            compare_ship_type x ship_type = 0)
-      with
-      | Some _ -> (
-          match
-            place_ship ship_type length game_state.player_one_board
-              (board_cell, orientation)
-          with
-          | Some new_board ->
-              game_state.player_one_board <- new_board;
-              game_state.player_one_ships_to_place <-
-                List.filter game_state.player_one_ships_to_place ~f:(fun x ->
-                    compare_ship_type x ship_type <> 0);
-              Dream.respond @@ board_to_string game_state.player_one_board
-          | None -> Dream.respond ~status:`Bad_Request "Invalid placement")
-      | None -> Dream.respond ~status:`Bad_Request "Ship already placed")
-  | 2 -> (
-      match
-        List.find game_state.player_two_ships_to_place ~f:(fun x ->
-            compare_ship_type x ship_type = 0)
-      with
-      | Some _ -> (
-          match
-            place_ship ship_type length game_state.player_two_board
-              (board_cell, orientation)
-          with
-          | Some new_board ->
-              game_state.player_two_board <- new_board;
-              game_state.player_two_ships_to_place <-
-                List.filter game_state.player_two_ships_to_place ~f:(fun x ->
-                    compare_ship_type x ship_type <> 0);
-              Dream.respond @@ board_to_string game_state.player_two_board
-          | None -> Dream.respond ~status:`Bad_Request "Invalid placement")
-      | None -> Dream.respond ~status:`Bad_Request "Ship already placed")
-  | _ -> failwith "Invalid player"
+    let length =
+      match ship_type with
+      | Carrier -> 5
+      | Battleship -> 4
+      | Destroyer -> 3
+      | Submarine -> 3
+      | Patrol -> 2
+    in
+
+    match player with
+    | 1 -> (
+        match
+          List.find game_state.player_one_ships_to_place ~f:(fun x ->
+              compare_ship_type x ship_type = 0)
+        with
+        | Some _ -> (
+            match
+              place_ship ship_type length game_state.player_one_board
+                (board_cell, orientation)
+            with
+            | Some new_board ->
+                game_state.player_one_board <- new_board;
+                game_state.player_one_ships_to_place <-
+                  List.filter game_state.player_one_ships_to_place ~f:(fun x ->
+                      compare_ship_type x ship_type <> 0);
+                Dream.respond @@ board_to_string game_state.player_one_board
+            | None -> Dream.respond ~status:`Bad_Request "Invalid placement")
+        | None -> Dream.respond ~status:`Bad_Request "Ship already placed")
+    | 2 -> (
+        match
+          List.find game_state.player_two_ships_to_place ~f:(fun x ->
+              compare_ship_type x ship_type = 0)
+        with
+        | Some _ -> (
+            match
+              place_ship ship_type length game_state.player_two_board
+                (board_cell, orientation)
+            with
+            | Some new_board ->
+                game_state.player_two_board <- new_board;
+                game_state.player_two_ships_to_place <-
+                  List.filter game_state.player_two_ships_to_place ~f:(fun x ->
+                      compare_ship_type x ship_type <> 0);
+                Dream.respond @@ board_to_string game_state.player_two_board
+            | None -> Dream.respond ~status:`Bad_Request "Invalid placement")
+        | None -> Dream.respond ~status:`Bad_Request "Ship already placed")
+    | _ -> failwith "Invalid player"
 
 let attack_cell_handler request =
   let player = int_of_string @@ Dream.param "player" request in
@@ -137,47 +149,63 @@ let attack_cell_handler request =
     | Error msg -> failwith msg
   in
 
-  let target_cell =
-    match String.split ~on:' ' attack_cell_request_json.cell with
-    | [ row; col ] -> (int_of_string row, Char.of_string col)
-    | _ -> failwith "Invalid cell"
+  let board_cell_str_list =
+    String.split ~on:' ' attack_cell_request_json.cell
   in
 
-  let current_turn = if game_state.player_one_turn then 1 else 2 in
-
-  if player <> current_turn then
-    Dream.respond ~status:`Bad_Request "Not your turn!"
+  if
+    List.length board_cell_str_list <> 2
+    || not
+       @@ Str.string_match (Str.regexp "[0-9]+$")
+            (List.nth_exn board_cell_str_list 0)
+            0
+    || not
+       @@ Str.string_match (Str.regexp "[A-J]+$")
+            (List.nth_exn board_cell_str_list 1)
+            0
+  then Dream.respond ~status:`Bad_Request "Invalid cell"
   else
-    match player with
-    | 1 -> (
-        match attack_cell game_state.player_two_board target_cell with
-        | new_board, Missed ->
-            game_state.player_two_board <- new_board;
-            game_state.player_one_turn <- not game_state.player_one_turn;
-            Dream.respond ~status:`No_Content "Miss"
-        | new_board, Success ->
-            game_state.player_two_board <- new_board;
-            game_state.player_one_turn <- not game_state.player_one_turn;
-            if is_game_over new_board then game_state.winner <- Some player;
-            Dream.respond "Hit!"
-        | _, Repeat ->
-            Dream.respond ~status:`Bad_Request "Cell already attacked"
-        | _, Invalid -> Dream.respond ~status:`Bad_Request "Invalid cell")
-    | 2 -> (
-        match attack_cell game_state.player_one_board target_cell with
-        | new_board, Missed ->
-            game_state.player_one_board <- new_board;
-            game_state.player_one_turn <- not game_state.player_one_turn;
-            Dream.respond ~status:`No_Content "Miss"
-        | new_board, Success ->
-            game_state.player_one_board <- new_board;
-            game_state.player_one_turn <- not game_state.player_one_turn;
-            if is_game_over new_board then game_state.winner <- Some player;
-            Dream.respond "Hit!"
-        | _, Repeat ->
-            Dream.respond ~status:`Bad_Request "Cell already attacked"
-        | _, Invalid -> Dream.respond ~status:`Bad_Request "Invalid cell")
-    | _ -> failwith "Invalid player"
+    let target_cell =
+      match board_cell_str_list with
+      | [ row; col ] -> (int_of_string row, Char.of_string col)
+      | _ -> failwith "Invalid cell"
+    in
+
+    let current_turn = if game_state.player_one_turn then 1 else 2 in
+
+    if player <> current_turn then
+      Dream.respond ~status:`Bad_Request "Not your turn!"
+    else
+      match player with
+      | 1 -> (
+          match attack_cell game_state.player_two_board target_cell with
+          | new_board, Missed ->
+              game_state.player_two_board <- new_board;
+              game_state.player_one_turn <- not game_state.player_one_turn;
+              Dream.respond "Miss"
+          | new_board, Success ->
+              game_state.player_two_board <- new_board;
+              game_state.player_one_turn <- not game_state.player_one_turn;
+              if is_game_over new_board then game_state.winner <- Some player;
+              Dream.respond "Hit!"
+          | _, Repeat ->
+              Dream.respond ~status:`Bad_Request "Cell already attacked"
+          | _, Invalid -> Dream.respond ~status:`Bad_Request "Invalid cell")
+      | 2 -> (
+          match attack_cell game_state.player_one_board target_cell with
+          | new_board, Missed ->
+              game_state.player_one_board <- new_board;
+              game_state.player_one_turn <- not game_state.player_one_turn;
+              Dream.respond "Miss"
+          | new_board, Success ->
+              game_state.player_one_board <- new_board;
+              game_state.player_one_turn <- not game_state.player_one_turn;
+              if is_game_over new_board then game_state.winner <- Some player;
+              Dream.respond "Hit!"
+          | _, Repeat ->
+              Dream.respond ~status:`Bad_Request "Cell already attacked"
+          | _, Invalid -> Dream.respond ~status:`Bad_Request "Invalid cell")
+      | _ -> failwith "Invalid player"
 
 let connection_handler _ =
   num_connections := !num_connections + 1;

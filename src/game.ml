@@ -173,7 +173,7 @@ and attack () =
       | 400 ->
           let%lwt _ = Lwt_io.printl @@ body ^ ". Try again" in
           attack ()
-      | 204 | 200 ->
+      | 200 ->
           let%lwt _ = Lwt_io.printl body in
           main_loop ()
       | code -> failwith @@ "API responded with code " ^ string_of_int code)
