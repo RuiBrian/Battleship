@@ -373,6 +373,25 @@ let test_get_tracking_board _ =
      9 |   |   |   |   |   |   |   |   |   |   "
   @@ B.to_tracking_board_string result_board
 
+let test_valid_request _ =
+  assert_equal true @@ B.valid_request "Carrier" "Horizontal" [ "1"; "A" ];
+  assert_equal true @@ B.valid_request "carrier" "Horizontal" [ "1"; "A" ];
+  assert_equal true @@ B.valid_request "Carrier" "horizontal" [ "1"; "A" ];
+  assert_equal true @@ B.valid_request "Carrier" "Vertical" [ "1"; "A" ];
+  assert_equal true @@ B.valid_request "Carrier" "vertical" [ "1"; "A" ];
+  assert_equal true @@ B.valid_request "Battleship" "horizontal" [ "1"; "A" ];
+  assert_equal true @@ B.valid_request "battleship" "horizontal" [ "1"; "A" ];
+  assert_equal true @@ B.valid_request "Destroyer" "horizontal" [ "1"; "A" ];
+  assert_equal true @@ B.valid_request "destroyer" "horizontal" [ "1"; "A" ];
+  assert_equal true @@ B.valid_request "Submarine" "horizontal" [ "1"; "A" ];
+  assert_equal true @@ B.valid_request "submarine" "horizontal" [ "1"; "A" ];
+  assert_equal true @@ B.valid_request "Patrol" "horizontal" [ "1"; "A" ];
+  assert_equal true @@ B.valid_request "patrol" "horizontal" [ "1"; "A" ];
+  assert_equal false @@ B.valid_request "Carrier" "Horizontal" [ "1"; "asdf" ];
+  assert_equal false @@ B.valid_request "Carrier" "Horizontal" [ "1"; "Z" ];
+  assert_equal false @@ B.valid_request "asdf" "Horizontal" [ "1" ];
+  assert_equal false @@ B.valid_request "Carrier" "asdf" [ "1" ]
+
 let battleship_tests =
   "Battleship Tests"
   >: test_list
@@ -385,6 +404,7 @@ let battleship_tests =
          "Get unsunk ships" >:: test_get_remaining_ships;
          "Get primary board" >:: test_get_primary_board;
          "Get tracking board" >:: test_get_tracking_board;
+         "Check valid request" >:: test_valid_request;
        ]
 
 let series = "Tests" >::: [ battleship_tests ]

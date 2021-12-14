@@ -45,17 +45,14 @@ let valid_request (ship_type : string) (orientation : string)
     (board_cell_str_list : string list) : bool =
   let validate_type =
     match ship_type with
-    | "Carrier" | "carrier" -> true
-    | "Battleship" | "battleship" -> true
-    | "Destroyer" | "destroyer" -> true
-    | "Submarine" | "submarine" -> true
-    | "Patrol" | "patrol" -> true
+    | "Carrier" | "carrier" | "Battleship" | "battleship" | "Destroyer"
+    | "destroyer" | "Submarine" | "submarine" | "Patrol" | "patrol" ->
+        true
     | _ -> false
   in
   let validate_orientation =
     match orientation with
-    | "Horizontal" | "horizontal" -> true
-    | "Vertical" | "vertical" -> true
+    | "Horizontal" | "horizontal" | "Vertical" | "vertical" -> true
     | _ -> false
   in
   let validate_cell =
