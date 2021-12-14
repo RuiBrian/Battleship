@@ -116,13 +116,13 @@ let place_ship (s : ship_type) (l : int) (b : board)
     match orientation with
     | Vertical ->
         Int.between x ~low:0 ~high:9
-        && Int.between (x + length) ~low:0 ~high:9
+        && Int.between (x + length - 1) ~low:0 ~high:9
         && Char.between y ~low:'A' ~high:'J'
     | Horizontal ->
         Int.between x ~low:0 ~high:9
         && Char.between y ~low:'A' ~high:'J'
         && Char.between
-             (Char.of_int_exn (Char.to_int y + length))
+             (Char.of_int_exn (Char.to_int y + length - 1))
              ~low:'A' ~high:'J'
   in
 
