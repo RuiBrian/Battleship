@@ -16,6 +16,15 @@ The game uses the following ship types:
 
 Each ship can be oriented horizontally or vertically according to the user input.
 
+Each player has their own primary board and tracking board. The primary board allows a player to see their own shots and whether they were hits or misses. The tracking board allows a player to see where their own ships are placed and also where the enemy has taken shots. The game uses the following to provide information about each cell:
+
+| Cell Letter |    Meaning   |
+|:-----------:|:------------:|
+|      O      |   Occupied   |
+|      H      |      Hit     |
+|      M      |     Miss     |
+|   \<empty>   | Undiscovered |
+
 ## Installation
 
 To install all project dependencies:
@@ -60,11 +69,11 @@ $ <row> <col>
 Example: 1 A
 ```
 
-Currently, the web server must be restarted after each game (since only two connections are allowed at once). To do this simply kill the web server with `Ctrl + C` and start the server again.
+Currently, the web server must be restarted after each game (since only two connections are allowed at once). To do this, simply kill the web server with `Ctrl + C` and start the server again.
 
 ## Tests
 
-All tests for the Battleship library functions are located in the `/tests` directory. To run the test suite:
+All tests for the Battleship library functions are located in the `/tests` directory. Run the test suite with
 
 ```
 $ dune test
