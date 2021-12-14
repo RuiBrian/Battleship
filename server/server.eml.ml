@@ -37,11 +37,11 @@ let game_state =
     winner = None;
   }
 
-let homepage_handler _ =
+let homepage_handler (_ : Dream.request) : Dream.response Lwt.t =
   let header = "<html>\n<body>\n<h1>Battleship.</h1>\n</body>\n</html>" in
   Dream.html header
 
-let place_ship_handler request =
+let place_ship_handler (request : Dream.request) : Dream.response Lwt.t =
   let player = int_of_string @@ Dream.param "player" request in
   let%lwt body = Dream.body request in
 
@@ -135,7 +135,7 @@ let place_ship_handler request =
         | None -> Dream.respond ~status:`Bad_Request "Ship already placed")
     | _ -> failwith "Invalid player"
 
-let attack_cell_handler request =
+let attack_cell_handler (request : Dream.request) : Dream.response Lwt.t =
   let player = int_of_string @@ Dream.param "player" request in
   let%lwt body = Dream.body request in
 
@@ -207,7 +207,7 @@ let attack_cell_handler request =
           | _, Invalid -> Dream.respond ~status:`Bad_Request "Invalid cell")
       | _ -> failwith "Invalid player"
 
-let connection_handler _ =
+let connection_handler (_ : Dream.request) : Dream.response Lwt.t =
   num_connections := !num_connections + 1;
   if !num_connections > 2 then
     Dream.respond ~status:`Too_Many_Requests "Too many players!"
@@ -216,24 +216,24 @@ let connection_handler _ =
       ~headers:[ ("Connection", "keep-alive") ]
       (string_of_int !num_connections)
 
-let get_turn_handler _ =
+let get_turn_handler (_ : Dream.request) : Dream.response Lwt.t =
   if game_state.player_one_turn then Dream.respond "1" else Dream.respond "2"
 
-let get_game_winner_handler _ =
+let get_game_winner_handler (_ : Dream.request) : Dream.response Lwt.t =
   match game_state.winner with
   | None -> Dream.respond "None"
   | Some 1 -> Dream.respond "Player 1"
   | Some 2 -> Dream.respond "Player 2"
   | Some _ -> Dream.respond ~status:`Bad_Request "Invalid player"
 
-let get_ready_status_handler _ =
+let get_ready_status_handler (_ : Dream.request) : Dream.response Lwt.t =
   if
     List.length game_state.player_one_ships_to_place = 0
     && List.length game_state.player_two_ships_to_place = 0
   then Dream.respond "Ready"
   else Dream.respond "Not Ready"
 
-let ships_to_place_handler request =
+let ships_to_place_handler (request : Dream.request) : Dream.response Lwt.t =
   let player = int_of_string @@ Dream.param "player" request in
 
   match player with
@@ -253,21 +253,21 @@ let ships_to_place_handler request =
              game_state.player_two_ships_to_place
   | _ -> Dream.respond ~status:`Bad_Request "Invalid player"
 
-let get_primary_board_handler request =
+let primary_board_handler (request : Dream.request) : Dream.response Lwt.t =
   let player = int_of_string @@ Dream.param "player" request in
   match player with
   | 1 -> Dream.respond @@ to_primary_board_string game_state.player_two_board
   | 2 -> Dream.respond @@ to_primary_board_string game_state.player_one_board
   | _ -> Dream.respond ~status:`Bad_Request "Invalid player"
 
-let get_tracking_board_handler request =
+let tracking_board_handler (request : Dream.request) : Dream.response Lwt.t =
   let player = int_of_string @@ Dream.param "player" request in
   match player with
   | 1 -> Dream.respond @@ to_tracking_board_string game_state.player_one_board
   | 2 -> Dream.respond @@ to_tracking_board_string game_state.player_two_board
   | _ -> Dream.respond ~status:`Bad_Request "Invalid player: "
 
-let get_remaining_ships_handler request =
+let remaining_ships_handler (request : Dream.request) : Dream.response Lwt.t =
   let player = int_of_string @@ Dream.param "player" request in
   match player with
   | 1 ->
@@ -295,10 +295,9 @@ let () =
          Dream.scope "/battleship" []
            [
              Dream.get "/ships-to-place/:player" ships_to_place_handler;
-             Dream.get "/get-primary-board/:player" get_primary_board_handler;
-             Dream.get "/get-tracking-board/:player" get_tracking_board_handler;
-             Dream.get "/get-remaining-ships/:player"
-               get_remaining_ships_handler;
+             Dream.get "/get-primary-board/:player" primary_board_handler;
+             Dream.get "/get-tracking-board/:player" tracking_board_handler;
+             Dream.get "/get-remaining-ships/:player" remaining_ships_handler;
              Dream.post "/place-ship/:player" place_ship_handler;
              Dream.post "/attack-cell/:player" attack_cell_handler;
            ];
