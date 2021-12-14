@@ -1,6 +1,7 @@
 (rule
  (deps
   lib/battleship.ml
+  lib/battleship.mli
   lib/dune
   server/server.ml
   server/dune
@@ -8,6 +9,8 @@
   src/dune
   tests/tests.ml
   tests/dune
+  dune-project
+  battleship.opam
   README.md)
  (targets battleship.zip)
  (action
