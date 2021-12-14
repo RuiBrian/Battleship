@@ -60,6 +60,8 @@ $ <row> <col>
 Example: 1 A
 ```
 
+Currently, the web server must be restarted after each game (since only two connections are allowed at once). To do this simply kill the web server with `Ctrl + C` and start the server again.
+
 ## Tests
 
 All tests for the Battleship library functions are located in the `/tests` directory. To run the test suite:
